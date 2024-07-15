@@ -205,6 +205,6 @@ impl TagType {
 #[macro_export]
 macro_rules! convert {
     ($inp:expr, $target_type:ty) => {
-        $target_type::from(inp.to_anytag())
+        <$target_type>::from($inp.to_anytag())
     };
 }
