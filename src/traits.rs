@@ -57,7 +57,7 @@ pub trait AudioTagEdit: AudioTagConfig {
             self.remove_album_artist()
         }
         if let Some(pic) = album.cover {
-            self.set_album_cover(pic)
+            self.set_album_cover(&pic)
         } else {
             self.remove_album_cover()
         }
@@ -89,11 +89,11 @@ pub trait AudioTagEdit: AudioTagConfig {
     }
 
     fn album_cover(&self) -> Option<Picture>;
-    fn set_album_cover(&mut self, cover: Picture);
+    fn set_album_cover(&mut self, cover: &Picture);
     fn remove_album_cover(&mut self);
 
     fn composer(&self) -> Option<&str>;
-    fn set_composer(&mut self, composer: String);
+    fn set_composer(&mut self, composer: &str);
     fn remove_composer(&mut self);
 
     fn track(&self) -> (Option<u16>, Option<u16>) {
@@ -141,8 +141,12 @@ pub trait AudioTagEdit: AudioTagConfig {
     fn remove_genre(&mut self);
 
     fn comment(&self) -> Option<&str>;
-    fn set_comment(&mut self, genre: String);
+    fn set_comment(&mut self, genre: &str);
     fn remove_comment(&mut self);
+
+    fn unsynced_lyrics(&self) -> Option<&str>;
+    fn set_unsynced_lyrics(&mut self, lyrics: &str);
+    fn remove_unsynced_lyrics(&mut self);
 }
 
 pub trait AudioTagWrite {

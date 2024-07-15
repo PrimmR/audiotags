@@ -28,6 +28,9 @@ impl<'a> From<AnyTag<'a>> for FlacTag {
         if let Some(v) = inp.album_artists_as_string() {
             t.set_album_artist(&v)
         }
+        if let Some(ref v) = inp.album_cover {
+            t.set_album_cover(v)
+        }
         if let Some(v) = inp.track_number() {
             t.set_track_number(v)
         }
@@ -40,6 +43,18 @@ impl<'a> From<AnyTag<'a>> for FlacTag {
         if let Some(v) = inp.total_discs() {
             t.set_total_discs(v)
         }
+        if let Some(v) = inp.genre() {
+            t.set_genre(v)
+        }
+        if let Some(v) = inp.composer() {
+            t.set_composer(v)
+        }
+        if let Some(v) = inp.comment() {
+            t.set_comment(v)
+        }
+        if let Some(v) = inp.unsynced_lyrics() {
+            t.set_unsynced_lyrics(v)
+        }
         t
     }
 }
@@ -47,6 +62,8 @@ impl<'a> From<AnyTag<'a>> for FlacTag {
 impl<'a> From<&'a FlacTag> for AnyTag<'a> {
     fn from(inp: &'a FlacTag) -> Self {
         let tag = Self {
+            config: Default::default(),
+
             title: inp.title(),
             artists: inp.artists(),
             date: inp.date(),
@@ -62,7 +79,7 @@ impl<'a> From<&'a FlacTag> for AnyTag<'a> {
             genre: inp.genre(),
             composer: inp.composer(),
             comment: inp.comment(),
-            ..Self::default()
+            unsynced_lyrics: inp.unsynced_lyrics(),
         };
 
         tag
@@ -181,7 +198,7 @@ impl AudioTagEdit for FlacTag {
                 })
             })
     }
-    fn set_album_cover(&mut self, cover: Picture) {
+    fn set_album_cover(&mut self, cover: &Picture) {
         self.remove_album_cover();
         let mime = String::from(cover.mime_type);
         let picture_type = metaflac::block::PictureType::CoverFront;
@@ -196,8 +213,8 @@ impl AudioTagEdit for FlacTag {
     fn composer(&self) -> Option<&str> {
         self.get_first("COMPOSER")
     }
-    fn set_composer(&mut self, composer: String) {
-        self.set_first("COMPOSER", &composer);
+    fn set_composer(&mut self, composer: &str) {
+        self.set_first("COMPOSER", composer);
     }
     fn remove_composer(&mut self) {
         self.remove("COMPOSER")
@@ -274,11 +291,21 @@ impl AudioTagEdit for FlacTag {
     fn comment(&self) -> Option<&str> {
         self.get_first("COMMENT")
     }
-    fn set_comment(&mut self, v: String) {
+    fn set_comment(&mut self, v: &str) {
         self.set_first("COMMENT", &v);
     }
     fn remove_comment(&mut self) {
         self.remove("COMMENT");
+    }
+
+    fn unsynced_lyrics(&self) -> Option<&str> {
+        self.get_first("UNSYNCEDLYRICS")
+    }
+    fn set_unsynced_lyrics(&mut self, v: &str) {
+        self.set_first("UNSYNCEDLYRICS", &v)
+    }
+    fn remove_unsynced_lyrics(&mut self) {
+        self.remove("UNSYNCEDLYRICS")
     }
 }
 

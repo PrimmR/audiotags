@@ -62,7 +62,7 @@ macro_rules! test_file {
                 data: &[0u8; 10],
             };
 
-            tags.set_album_cover(cover.clone());
+            tags.set_album_cover(&cover.clone());
             assert_eq!(tags.album_cover(), Some(cover));
             tags.remove_album_cover();
             assert!(tags.album_cover().is_none());
@@ -74,7 +74,7 @@ macro_rules! test_file {
             assert!(tags.genre().is_none());
             tags.remove_genre();
 
-            tags.set_comment("foo song comment".to_string());
+            tags.set_comment("foo song comment");
             assert_eq!(tags.comment(), Some("foo song comment"));
             tags.remove_comment();
             assert!(tags.comment().is_none());
