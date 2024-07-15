@@ -276,7 +276,7 @@ impl AudioTagEdit for Id3v2Tag {
         });
     }
     fn remove_comment(&mut self) {
-        self.inner.remove("COMM");
+        self.inner.remove("COM");
     }
 
     fn unsynced_lyrics(&self) -> Option<&str> {
