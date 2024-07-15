@@ -1,6 +1,7 @@
 use crate::*;
 use id3::Timestamp;
 use metaflac;
+use std::mem::replace;
 use std::str::FromStr;
 
 pub use metaflac::Tag as FlacInnerTag;
@@ -315,7 +316,20 @@ impl AudioTagWrite for FlacTag {
         Ok(())
     }
     fn write_to_path(&mut self, path: &str) -> crate::Result<()> {
-        self.inner.write_to_path(path)?;
+        let mut old_meta = FlacInnerTag::read_from_path(&path)?;
+        old_meta.remove_blocks(metaflac::BlockType::VorbisComment);
+        old_meta.remove_blocks(metaflac::BlockType::Picture);
+
+        self.inner
+            .get_blocks_mut(metaflac::BlockType::VorbisComment)
+            .for_each(|b| old_meta.push_block(replace(b, metaflac::Block::Unknown((0, vec![])))));
+        self.inner
+            .get_blocks_mut(metaflac::BlockType::Picture)
+            .for_each(|b| old_meta.push_block(replace(b, metaflac::Block::Unknown((0, vec![])))));
+
+        old_meta.write_to_path(&path)?;
+
+        // self.inner.write_to_path(path)?;
         Ok(())
     }
 }

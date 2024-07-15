@@ -189,15 +189,27 @@ pub enum TagType {
     Mp4,
 }
 
-#[rustfmt::skip]
 impl TagType {
-    fn try_from_ext(ext: &str) -> crate::Result<Self> {
+    #[rustfmt::skip]
+    pub fn try_from_ext(ext: &str) -> crate::Result<Self> {
         match ext {
                                                      "mp3" => Ok(Self::Id3v2),
             "m4a" | "m4b" | "m4p" | "m4v" | "isom" | "mp4" => Ok(Self::Mp4),
                                                     "flac" => Ok(Self::Flac),
             p => Err(crate::Error::UnsupportedFormat(p.to_owned())),
         }
+    }
+
+    pub fn try_from_path(path: impl AsRef<Path>) -> crate::Result<Self> {
+        TagType::try_from_ext(
+            path.as_ref()
+                .extension()
+                .ok_or(Error::UnknownFileExtension(String::new()))?
+                .to_string_lossy()
+                .to_string()
+                .to_lowercase()
+                .as_str(),
+        )
     }
 }
 
