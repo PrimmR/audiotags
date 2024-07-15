@@ -62,7 +62,7 @@ macro_rules! test_file {
                 data: &[0u8; 10],
             };
 
-            tags.set_album_cover(&cover.clone());
+            tags.set_album_cover(&cover);
             assert_eq!(tags.album_cover(), Some(cover));
             tags.remove_album_cover();
             assert!(tags.album_cover().is_none());
