@@ -9,42 +9,27 @@ impl_tag!(Mp4Tag, Mp4InnerTag, TagType::Mp4);
 
 impl<'a> From<&'a Mp4Tag> for AnyTag<'a> {
     fn from(inp: &'a Mp4Tag) -> Self {
-        let title = inp.title();
-        let artists = inp.artists().map(|i| i.into_iter().collect::<Vec<_>>());
-        let date = inp.date();
-        let year = inp.year();
-        let duration = inp.duration();
-        let album_title = inp.album_title();
-        let album_artists = inp
-            .album_artists()
-            .map(|i| i.into_iter().collect::<Vec<_>>());
-        let album_cover = inp.album_cover();
-        let (a, b) = inp.track();
-        let track_number = a;
-        let total_tracks = b;
-        let (a, b) = inp.disc();
-        let disc_number = a;
-        let total_discs = b;
-        let genre = inp.genre();
-        let composer = inp.composer();
-        let comment = inp.comment();
+        let (track_number, total_tracks) = inp.track();
+        let (disc_number, total_discs) = inp.disc();
+
         Self {
             config: inp.config,
-            title,
-            artists,
-            date,
-            year,
-            duration,
-            album_title,
-            album_cover,
-            album_artists,
+            title: inp.title(),
+            artists: inp.artists(),
+            date: inp.date(),
+            year: inp.year(),
+            duration: inp.duration(),
+            album_title: inp.album_title(),
+            album_cover: inp.album_cover(),
+            album_artists: inp.album_artists(),
             track_number,
             total_tracks,
             disc_number,
             total_discs,
-            genre,
-            composer,
-            comment,
+            genre: inp.genre(),
+            composer: inp.composer(),
+            comment: inp.comment(),
+            unsynced_lyrics: inp.unsynced_lyrics(),
         }
     }
 }
@@ -67,6 +52,11 @@ impl<'a> From<AnyTag<'a>> for Mp4Tag {
                 if let Some(v) = inp.album_title() {
                     t.set_album(v)
                 }
+                if let Some(ref v) = inp.album_cover {
+                    if let Ok(a) = v.try_into() {
+                        t.set_artwork(a)
+                    }
+                }
                 if let Some(i) = inp.album_artists() {
                     i.iter().for_each(|&a| t.add_album_artist(a))
                 }
@@ -82,6 +72,18 @@ impl<'a> From<AnyTag<'a>> for Mp4Tag {
                 if let Some(v) = inp.total_discs() {
                     t.set_total_discs(v)
                 }
+                if let Some(v) = inp.genre() {
+                    t.set_genre(v)
+                }
+                if let Some(v) = inp.composer() {
+                    t.set_composer(v)
+                }
+                if let Some(v) = inp.comment() {
+                    t.set_comment(v)
+                }
+                if let Some(v) = inp.unsynced_lyrics() {
+                    t.set_lyrics(v)
+                }
                 t
             },
         }
@@ -90,6 +92,7 @@ impl<'a> From<AnyTag<'a>> for Mp4Tag {
 
 impl<'a> std::convert::TryFrom<&'a mp4ameta::Data> for Picture<'a> {
     type Error = crate::Error;
+
     fn try_from(inp: &'a mp4ameta::Data) -> crate::Result<Self> {
         Ok(match *inp {
             mp4ameta::Data::Png(ref data) => Self {
@@ -99,6 +102,10 @@ impl<'a> std::convert::TryFrom<&'a mp4ameta::Data> for Picture<'a> {
             mp4ameta::Data::Jpeg(ref data) => Self {
                 data,
                 mime_type: MimeType::Jpeg,
+            },
+            mp4ameta::Data::Bmp(ref data) => Self {
+                data,
+                mime_type: MimeType::Bmp,
             },
             _ => return Err(crate::Error::NotAPicture),
         })
@@ -218,7 +225,7 @@ impl AudioTagEdit for Mp4Tag {
             _ => None,
         })
     }
-    fn set_album_cover(&mut self, cover: Picture) {
+    fn set_album_cover(&mut self, cover: &Picture) {
         self.remove_album_cover();
         self.inner.add_artwork(match cover.mime_type {
             MimeType::Png => mp4ameta::Img {
@@ -243,7 +250,7 @@ impl AudioTagEdit for Mp4Tag {
     fn composer(&self) -> Option<&str> {
         self.inner.composer()
     }
-    fn set_composer(&mut self, composer: String) {
+    fn set_composer(&mut self, composer: &str) {
         self.inner.set_composer(composer);
     }
     fn remove_composer(&mut self) {
@@ -307,11 +314,21 @@ impl AudioTagEdit for Mp4Tag {
     fn comment(&self) -> Option<&str> {
         self.inner.comment()
     }
-    fn set_comment(&mut self, comment: String) {
+    fn set_comment(&mut self, comment: &str) {
         self.inner.set_comment(comment);
     }
     fn remove_comment(&mut self) {
         self.inner.remove_comments();
+    }
+
+    fn unsynced_lyrics(&self) -> Option<&str> {
+        self.inner.lyrics()
+    }
+    fn set_unsynced_lyrics(&mut self, lyrics: &str) {
+        self.inner.set_lyrics(lyrics)
+    }
+    fn remove_unsynced_lyrics(&mut self) {
+        self.inner.remove_lyrics()
     }
 }
 

@@ -25,6 +25,7 @@ impl<'a> From<&'a Id3v2Tag> for AnyTag<'a> {
             genre: inp.genre(),
             composer: inp.composer(),
             comment: inp.comment(),
+            unsynced_lyrics: inp.unsynced_lyrics(),
         }
     }
 }
@@ -53,6 +54,9 @@ impl<'a> From<AnyTag<'a>> for Id3v2Tag {
                 if let Some(v) = inp.album_artists_as_string() {
                     t.set_album_artist(&v)
                 }
+                if let Some(ref v) = inp.album_cover {
+                    t.add_frame(id3::frame::Picture::from(v));
+                }
                 if let Some(v) = inp.track_number() {
                     t.set_track(v as u32)
                 }
@@ -67,6 +71,23 @@ impl<'a> From<AnyTag<'a>> for Id3v2Tag {
                 }
                 if let Some(v) = inp.genre() {
                     t.set_genre(v)
+                }
+                if let Some(v) = inp.composer() {
+                    t.set_text("TCM", v)
+                }
+                if let Some(v) = inp.comment() {
+                    t.add_frame(id3::frame::Comment {
+                        lang: "XXX".to_string(),
+                        description: "".to_string(),
+                        text: String::from(v),
+                    });
+                }
+                if let Some(v) = inp.unsynced_lyrics() {
+                    t.add_frame(id3::frame::Lyrics {
+                        lang: "XXX".to_string(),
+                        description: "".to_string(),
+                        text: String::from(v),
+                    });
                 }
                 t
             },
@@ -161,7 +182,7 @@ impl AudioTagEdit for Id3v2Tag {
                 })
             })
     }
-    fn set_album_cover(&mut self, cover: Picture) {
+    fn set_album_cover(&mut self, cover: &Picture) {
         self.remove_album_cover();
         self.inner.add_frame(id3::frame::Picture {
             mime_type: String::from(cover.mime_type),
@@ -182,7 +203,7 @@ impl AudioTagEdit for Id3v2Tag {
 
         None
     }
-    fn set_composer(&mut self, composer: String) {
+    fn set_composer(&mut self, composer: &str) {
         self.inner.add_frame(Frame::text("TCOM", composer));
     }
     fn remove_composer(&mut self) {
@@ -247,15 +268,29 @@ impl AudioTagEdit for Id3v2Tag {
         }
         None
     }
-    fn set_comment(&mut self, comment: String) {
+    fn set_comment(&mut self, comment: &str) {
         self.inner.add_frame(id3::frame::Comment {
             lang: "XXX".to_string(),
             description: "".to_string(),
-            text: comment,
+            text: String::from(comment),
         });
     }
     fn remove_comment(&mut self) {
         self.inner.remove("COMM");
+    }
+
+    fn unsynced_lyrics(&self) -> Option<&str> {
+        self.inner.lyrics().next().map(|l| l.text.as_str())
+    }
+    fn set_unsynced_lyrics(&mut self, lyrics: &str) {
+        self.inner.add_frame(id3::frame::Lyrics {
+            lang: "XXX".to_string(),
+            description: "".to_string(),
+            text: String::from(lyrics),
+        });
+    }
+    fn remove_unsynced_lyrics(&mut self) {
+        self.inner.remove_all_lyrics()
     }
 }
 

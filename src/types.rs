@@ -41,6 +41,29 @@ impl From<MimeType> for String {
     }
 }
 
+impl From<&mp4ameta::ImgFmt> for MimeType {
+    fn from(fmt: &mp4ameta::ImgFmt) -> Self {
+        match fmt {
+            mp4ameta::ImgFmt::Png => Self::Png,
+            mp4ameta::ImgFmt::Bmp => Self::Bmp,
+            mp4ameta::ImgFmt::Jpeg => Self::Jpeg,
+        }
+    }
+}
+
+impl TryFrom<&MimeType> for mp4ameta::ImgFmt {
+    type Error = crate::Error;
+    fn try_from(mime: &MimeType) -> crate::Result<Self> {
+        Ok(match mime {
+            MimeType::Jpeg => Self::Jpeg,
+            MimeType::Png => Self::Png,
+            MimeType::Bmp => Self::Bmp,
+
+            _ => return Err(crate::Error::UnsupportedMimeType(format!("{:?}", mime))),
+        })
+    }
+}
+
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Picture<'a> {
     pub data: &'a [u8],
@@ -50,6 +73,50 @@ pub struct Picture<'a> {
 impl<'a> Picture<'a> {
     pub fn new(data: &'a [u8], mime_type: MimeType) -> Self {
         Self { data, mime_type }
+    }
+}
+
+impl<'a> From<Picture<'_>> for id3::frame::Picture {
+    fn from(p: Picture<'_>) -> Self {
+        Self {
+            mime_type: p.mime_type.into(),
+            picture_type: id3::frame::PictureType::CoverFront,
+            description: String::new(),
+            data: p.data.to_vec(),
+        }
+    }
+}
+
+impl<'a> From<&Picture<'_>> for id3::frame::Picture {
+    fn from(p: &Picture<'_>) -> Self {
+        Self {
+            mime_type: p.mime_type.into(),
+            picture_type: id3::frame::PictureType::CoverFront,
+            description: String::new(),
+            data: p.data.to_vec(),
+        }
+    }
+}
+
+impl<'a> TryFrom<Picture<'a>> for mp4ameta::Img<&'a [u8]> {
+    type Error = crate::Error;
+
+    fn try_from(p: Picture<'a>) -> Result<Self> {
+        Ok(Self {
+            fmt: (&p.mime_type).try_into()?,
+            data: p.data,
+        })
+    }
+}
+
+impl<'a> TryFrom<&Picture<'a>> for mp4ameta::Img<&'a [u8]> {
+    type Error = crate::Error;
+
+    fn try_from(p: &Picture<'a>) -> Result<Self> {
+        Ok(Self {
+            fmt: (&p.mime_type).try_into()?,
+            data: p.data,
+        })
     }
 }
 
