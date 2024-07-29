@@ -29,10 +29,10 @@ macro_rules! test_file {
             assert!(tags.artist().is_none());
             tags.remove_artist();
 
-            tags.set_date(Timestamp::from_str("2020-05-22").unwrap());
+            tags.set_date(id3::Timestamp::from_str("2020-05-22").unwrap());
             assert_eq!(
                 tags.date(),
-                Some(Timestamp::from_str("2020-05-22").unwrap())
+                Some(id3::Timestamp::from_str("2020-05-22").unwrap())
             );
             tags.remove_date();
             assert!(tags.date().is_none());
