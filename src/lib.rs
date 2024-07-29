@@ -87,6 +87,8 @@ use std::path::Path;
 
 pub use std::convert::{TryFrom, TryInto};
 
+pub use id3::Timestamp;
+
 /// A builder for `Box<dyn AudioTag>`. If you do not want a trait object, you can use individual types.
 ///
 /// # Examples
